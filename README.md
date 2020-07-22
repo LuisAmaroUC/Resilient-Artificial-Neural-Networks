@@ -1,1 +1,1 @@
-# Resilient_Artifial_Neural_Networks
+# Resilient_Artificial_Neural_Networks
