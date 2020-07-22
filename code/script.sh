@@ -1,23 +1,19 @@
 #!/bin/bash
 
-tag=$( tail -n 1 /home/luisamaro/Desktop/examples-master/cpp/mnist/build/ResultsStimDrop50/Dropout0.txt)
+
+tag=$( tail -n 1 pathToFile/Results.txt) 		#Reads the last line of a .txt file
 
 
-if (./testMnist)
-	then 
-		
-		if [ $tag == "HANG" ]
-		then 
-			
-			./srcipt.sh
-		fi
-	else
-		echo "SEGMENTATIONFAULT" >> /home/luisamaro/Desktop/examples-master/cpp/mnist/build/ResultsStimDrop50/Dropout0.txt
+while (! ./testMnistDropout)  
+	do
+	
+	echo "SEGMENTATIONFAULT" >> pathToFile/Results.txt		#writes SEGMENTATIONFAULT in the file
 
 	
-		echo "Restarting program..."	
+	echo "Restarting program..."	
 		
-		./script.sh
+	./script.sh
 		
-fi	
+done
+
 
