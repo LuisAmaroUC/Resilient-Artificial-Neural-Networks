@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#After an error has occurred the program restarts automatically
+
 
 tag=$( tail -n 1 pathToFile/Results.txt) 		#Reads the last line of a .txt file
 
