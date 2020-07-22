@@ -1,0 +1,228 @@
+#include <torch/torch.h>
+
+#include <cstddef>
+#include <cstdio>
+#include <iostream>
+#include <string>
+#include <vector>
+
+//Files
+#include <fstream>
+#include <string>
+using namespace std;
+
+#include "/home/luisamaro/Desktop/cpp-subprocess-master/include/subprocess.hpp"
+
+//Generate random
+#include <stdlib.h>
+
+#include <unistd.h>		// ::getpid()
+// Where to find the MNIST dataset.
+const char* kDataRoot = "./data";
+
+// The batch size for training.
+const int64_t kTrainBatchSize = 64;
+
+// The batch size for testing.
+const int64_t kTestBatchSize = 1000; // default = 1000;
+
+// The number of epochs to train.
+const int64_t kNumberOfEpochs = 10;
+
+// After how many batches to log a new update with the loss value.
+const int64_t kLogInterval = 10;
+
+
+int savePid = 0;
+//HW_Fault_Injection_Path
+//std::string path = "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel";
+
+void HW_Fault_Injection(char* argv[]){
+
+
+ //std::cout << "HW_Fault_Injection" << savePid << std::endl;
+ //std::cout << "OTHER" << ::getpid() << std::endl;
+      srand (time(NULL));
+      int insertTime = rand() % 500 + 100;   //in the range of 100 to 600
+
+     // std::cout << insertTime << std::endl;
+
+      std::stringstream stream;    
+      stream << "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel" ///pinject_fp
+          << " " // don't forget a space between the path and the arguments
+          << std::to_string(savePid) // pid
+          << " " // don't forget a space between the path and the arguments
+          << argv[0]
+          << " " // don't forget a space between the path and the arguments
+          << argv[1]
+          << " " // don't forget a space between the path and the arguments
+          << 10;    //std::to_string(insertTime)
+
+    system(stream.str().c_str());
+
+}
+
+struct NetImpl : torch::nn::Module {
+  NetImpl()
+      : conv1(torch::nn::Conv2dOptions(1, 10, /*kernel_size=*/5)),
+        conv2(torch::nn::Conv2dOptions(10, 20, /*kernel_size=*/5)),
+        
+  
+        fc1(320, 50),
+        fc2(50, 10) {
+    register_module("conv1", conv1);
+    register_module("conv2", conv2);
+    //register_module("conv2_drop", conv2_drop);
+    register_module("fc1", fc1);
+    register_module("fc2", fc2);
+  }
+
+  torch::Tensor forward(torch::Tensor x) {
+    x = torch::relu(torch::max_pool2d(conv1->forward(x), 2));
+    x = torch::relu(
+      torch::max_pool2d((conv2->forward(x)), 2));
+    //    torch::max_pool2d(conv2_drop->forward(conv2->forward(x)), 2));
+    x = x.view({-1, 320});
+    x = torch::relu(fc1->forward(x));
+    //x = torch::dropout(x, /*p=*/0.5, /*training=*/is_training());
+    x = fc2->forward(x);
+    return torch::log_softmax(x, /*dim=*/1);
+  }
+
+  torch::nn::Conv2d conv1;
+  torch::nn::Conv2d conv2;
+  //torch::nn::FeatureDropout conv2_drop;
+  torch::nn::Linear fc1;
+  torch::nn::Linear fc2;
+};
+TORCH_MODULE(Net);
+
+
+
+template <typename DataLoader>
+void test(Net model, torch::Device device, DataLoader& data_loader, size_t dataset_size, char* argv[]) {
+  
+
+    
+    torch::NoGradGuard no_grad;
+
+    model->eval();
+
+    double test_loss = 0;
+
+    int32_t correct = 0;
+
+    int count = 1;
+
+
+
+     
+
+
+    
+    //std::cout << "NORMAL" << ::getpid() << std::endl;
+
+    for (const auto& batch : data_loader) {
+    	
+    	//2091490088
+      count++;
+
+     
+
+        //if(count == randomNumber)  std::thread t1( HW_Fault_Injection, argv);
+      
+        auto data = batch.data.to(device), targets = batch.target.to(device);
+        auto output = model->forward(data);
+        test_loss += torch::nll_loss(
+                         output,
+                         targets,
+                         /*weight=*/{},
+                          Reduction::Sum)
+                         //at::Reduction::Sum)
+                         .template item<float>();
+        auto pred = output.argmax(1);
+        correct += pred.eq(targets).sum().template item<int64_t>();
+  	
+      }
+
+
+    test_loss /= dataset_size;
+    // value = round (value * 1000.0) / 1000.0
+   // double accuracy = round((static_cast<double>(correct) / dataset_size) * 1000000.0) / 10000.0;
+
+    /*std::printf(
+        "\nTest set: Average loss: %.4f | Accuracy: %.3f\n ",
+        test_loss,
+        static_cast<double>(correct) / dataset_size);*/
+
+
+      std::printf(
+        "\nAccuracy: %.6f\n",
+        static_cast<double>(correct) / dataset_size);
+
+      std::ofstream myfile;
+      myfile.open("/home/luisamaro/Desktop/examples-master/cpp/mnist/build/ResultsStimDrop50/Dropout0.txt", std::ios_base::app); // append instead of overwrite
+      myfile << setprecision(10) << static_cast<double>(correct) / dataset_size << "\n";
+      myfile.close();
+
+
+
+   /*  if(accuracy == 88.31) std::cout << "Accuracy: " << accuracy << std::endl;
+     else std::cout << "Accuracy: " << accuracy << "___________SDC___________" << std::endl;
+*/
+}
+
+
+
+
+auto main(int argc, char* argv[]) -> int {
+  torch::manual_seed(1);
+
+  torch::DeviceType device_type;
+  if (torch::cuda::is_available()) {
+    std::cout << "CUDA available! Training on GPU." << std::endl;
+    device_type = torch::kCUDA;
+  } else {
+   // std::cout << "Training on CPU." << std::endl;
+    device_type = torch::kCPU;
+  }
+  torch::Device device(device_type);
+
+  Net model;
+
+ 
+  auto test_dataset = torch::data::datasets::MNIST(
+                          kDataRoot, torch::data::datasets::MNIST::Mode::kTest)
+                          .map(torch::data::transforms::Normalize<>(0.1307, 0.3081))
+                          .map(torch::data::transforms::Stack<>());
+  const size_t test_dataset_size = test_dataset.size().value();
+  auto test_loader =
+      torch::data::make_data_loader(std::move(test_dataset), kTestBatchSize);
+
+  torch::optim::SGD optimizer(model->parameters(), torch::optim::SGDOptions(0.01).momentum(0.5));
+  
+  //print PID do projeto
+  std::cout << "DEBUG: accessfile() called by process " << ::getpid() << " (parent: " << ::getppid() << ")" << std::endl;
+  
+  torch::load(model,"model10Epochs.pt");  //Trained with 10 epoch
+  //torch::load(model,"model.pt");           //Trained with 1 epoch
+  //savePid = ::getpid();
+
+
+  
+  //pid_t pid = fork();
+
+
+
+  //if(pid == 0) HW_Fault_Injection(argv);
+  //else if(pid > 0){
+  int i = 0;
+  while(true) test(model, device, *test_loader, test_dataset_size, argv);
+  //}else {
+     // printf("Fork Failed");
+  //}
+  
+
+
+}
+
