@@ -11,8 +11,6 @@
 #include <string>
 using namespace std;
 
-#include "/home/luisamaro/Desktop/cpp-subprocess-master/include/subprocess.hpp"
-
 //Generate random
 #include <stdlib.h>
 
@@ -34,8 +32,6 @@ const int64_t kNumberOfEpochs = 10;
 // After how many batches to log a new update with the loss value.
 const int64_t kLogInterval = 10;
 
-//HW_Fault_Injection_Path
-//std::string path = "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel";
 
 
 struct NetImpl : torch::nn::Module {
@@ -143,41 +139,11 @@ void test(
     auto pred = output.argmax(1);
     correct += pred.eq(targets).sum().template item<int64_t>();
    
-  //  cout << count << " COUNT";
-  //  cout << randomNumber << " randomNumber";
-  /* 
-    if(count == randomNumber){
-	    std::stringstream stream;    
-	  	stream << "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel"
-	        << " " // don't forget a space between the path and the arguments
-	       	<< std::to_string(::getpid()) // pid
-	       	<< " " // don't forget a space between the path and the arguments
-	       	<< argv[0]
-	       	<< " " // don't forget a space between the path and the arguments
-	       	<< argv[1]
-	       	<< " " // don't forget a space between the path and the arguments
-	       	<< "0";
 
-	  	system(stream.str().c_str());
-	}
-	count++;*/
-  }
 
 
   test_loss /= dataset_size;
 
-     /*  std::stringstream stream;    
-	  	stream << "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel"
-	        << " " // don't forget a space between the path and the arguments
-	       	<< std::to_string(::getpid()) // pid
-	       	<< " " // don't forget a space between the path and the arguments
-	       	<< argv[0]
-	       	<< " " // don't forget a space between the path and the arguments
-	       	<< argv[1]
-	       	<< " " // don't forget a space between the path and the arguments
-	       	<< "0";
-
-	  	system(stream.str().c_str());*/
   /*std::printf(
       "\nTest set: Average loss: %.4f | Accuracy: %.3f\n ",
       test_loss,
@@ -234,45 +200,5 @@ auto main(int argc, char* argv[]) -> int {
 
   torch::save(model, "model10Epochs.pt");
 	
-
- /* std::string path = "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel";
-  std::string pid = std::to_string(::getpid());
-  std::string registo = argv[0] ;
-  std::string bit = argv[1];
-  std::string time = argv[2];
-  std::string cmdString;
-  cmdString = path+ " " + pid + " " + bit + " " + time;
-
-  cout << cmdString;
-
-  subprocess::popen cmd(path, {}); 
-  std::cout << cmd.stdout().rdbuf();
-
-  */
-  	  //Do the hardware fault injection
-
-   //std::cout << summary(model, (1,28,28)) << std::endl;
-
-   //Net newModel;
-
-   
-   //torch::load(newModel,"model10Epochs.pt");
-
-  //test(model, device, *test_loader, test_dataset_size, argv);
-
-  //cout << current_time << " seconds has passed since the begining of testing";
-  //serialize::OutputArchive output_archive;
-  //model->save(output_archive);
-  //output_archive.save_to("mode.pt");
-  //storch::save(model, 'model.pt');
-
-	//torch::save(model.state_dict(), "model.pt");
-
-	/*Net newModel;
-  	newModel.to(device);
-	torch::load(newMode,"model.pt");
-	 
-
-	test(newModel, device, *test_loader, test_dataset_size);*/
 
 }
