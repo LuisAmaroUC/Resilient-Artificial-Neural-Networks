@@ -209,124 +209,6 @@ template<bool feature_dropout, bool alpha_dropout, bool inplace, typename T>
 Ctype<inplace> _dropout_impl(T& input, double p, bool train) {
 
 
-/*
-
-TORCH_CHECK(p >= 0 && p <= 1, "dropout probability has to be between 0 and 1, but got ", p);
- //se p for igual 0 n/ é alterado qualquer valor
-  if (p == 0 || !train || input.numel() == 0) {
-   // std::cout << "probability == 0"<< std::endl;
-    return input;
-  }else{
-    //std::cout << "probability not zero -> "<< p << std::endl;
-
-
-      //std::cout << "DIMENSIONS" << input.sizes() << std::endl;
-      
-
-      auto input_sizes = input.sizes();
-
-      int64_t size_dim1 = input_sizes[0];
-      int64_t size_dim2 = input_sizes[1];
-      int64_t size_dim3 = input_sizes[2];
-      int64_t size_dim4 = input_sizes[3];
-
-      //std::cout << "DIMENSION 1 " << size_dim1 << "DIMENSION 2" << size_dim2 << "DIMENSION 3" << size_dim3 << "DIMENSION 4" << size_dim4 << std::endl;
-
-      //NOS PODEMOS TER TENSOR COM DIFERENTES DIMENSOES (1,2,3,4), POSTO ISTO TEMOS DE COBRIR ESTAS DIFERENTES OPÇOES
-      
-      
-
-    //double value =input[0][0][0][0].template item<double>();    //converter de at::Tensor -> c10::Scalar -> double
-
-    //  std::cout << value << std::endl;
-     
-      if(input.dim() == 1){
-        //std::cout << " 1 DIMENSION" << std::endl;
-       
-        for(int i = 0; i < size_dim1; i++){
-            std::cout << " 1 DIMENSION" << std::endl;
-            //std::cout << " Before bit-flip" << input[i] <<std::endl;
-            input[i] = err(input[i].template item<double>(), p);
-           // std::cout << " After bit-flip" << input[i] <<std::endl;
-        }
-
-      }else if(input.dim() == 2){
-       // std::cout << " 2 DIMENSION" << std::endl;
-          for(int i = 0; i < size_dim1; i++){
-            for(int j = 0; j < size_dim2; j++){
-              std::cout << " 2 DIMENSION" << std::endl;
-               // std::cout << " Before bit-flip" << input[i][j] <<std::endl;
-                input[i][j] = err(input[i][j].template item<double>(), p);
-               // std::cout << " After bit-flip" << input[i][j] <<std::endl;
-            }
-          }
-
-      }else if(input.dim() == 3){
-        //std::cout << " 3 DIMENSION" << std::endl;
-          for(int i = 0; i < size_dim1; i++){
-            for(int j = 0; j < size_dim2; j++){
-              for(int k = 0; k < size_dim3; k++){
-                std::cout << " 3 DIMENSION" << std::endl;
-               // std::cout << " Before bit-flip" << input[i][j][k] <<std::endl;
-                input[i][j][k] = err(input[i][j][k].template item<double>(), p);
-               // std::cout << " After bit-flip" << input[i][j][k] <<std::endl;
-              }
-            }
-          }
-
-      }else if(input.dim() == 4){
-        //std::cout << " 4 DIMENSION" << std::endl;
-
-          for(int i = 0; i < size_dim1; i++){
-            for(int j = 0; j < size_dim2; j++){
-              for(int k = 0; k < size_dim3; k++){
-                for(int l = 0;l < size_dim4; l++){
-                  std::cout << " 4 DIMENSION" << std::endl;
-                 // std::cout << " Before bit-flip" << input[i][j][k][l] <<std::endl;
-                  input[i][j][k][l] = err(input[i][j][k][l].template item<double>(),p);
-
-                 // std::cout << " After bit-flip" << input[i][j][k][l] <<std::endl;
-                }
-              }
-            }
-          }
-      }else{
-        std::cout << " + 4 DIMENSION" << std::endl;
-          return input;
-      }
-
-  
-      return input;
-    }
-}
-
-
-*/
-
-
-
-
-
-
-  //Nunca vão existir bit-flips
-  //if (p == 0 || !train || input.numel() == 0) {
-  //  return input;
-  
-  //}
-
-
-  //Vão sempre existir bit-flips
-  //if (p == 1) {
-    //return multiply<inplace>(input, at::zeros({}, input.options()));
-
-  
-      
-  //    std::cout << input.data.cpu().numpy()   << std::endl;
-    
-  //}
-
-
-//
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -494,20 +376,8 @@ auto main(int argc, char* argv[]) -> int {
   //torch::load(model, "modelStimDropout80.pt");  //STIMULATED DROPOUT 80% -> 0.877400
 
   torch::load(model, "modelStimDropout20.pt");  //STIMULATED DROPOUT 20% -> 0.880200
-  //torch::load(model,"model.pt");           //Trained with 1 epoch
-  //savePid = ::getpid();
-  
-  //pid_t pid = fork();
-  //if(pid == 0) HW_Fault_Injection(argv);
-  //else if(pid > 0){
-  int i = 0;
+
   while(true) test(model, device, *test_loader, test_dataset_size, argv);
-
-
-
-  //}else {
-  //    printf("Fork Failed");
-  //}
 
 
 }
