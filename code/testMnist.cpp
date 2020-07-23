@@ -122,7 +122,7 @@ void test(Net model, torch::Device device, DataLoader& data_loader, size_t datas
         static_cast<double>(correct) / dataset_size);
 
       std::ofstream myfile;
-      myfile.open("/home/luisamaro/Desktop/examples-master/cpp/mnist/build/ResultsStimDrop50/Dropout0.txt", std::ios_base::app); // append instead of overwrite
+      myfile.open("pathToFile/Results.txt", std::ios_base::app); // append instead of overwrite
       myfile << setprecision(10) << static_cast<double>(correct) / dataset_size << "\n";
       myfile.close();
 
