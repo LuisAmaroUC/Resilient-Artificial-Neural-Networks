@@ -12,13 +12,12 @@
 using namespace std;
 
 
-///////////////////////////NEW STIMULATED DROPOUT////////////////////////////////////////////
+
 #include <ATen/ATen.h>
 #include <ATen/Dispatch.h>
 #include <ATen/NamedTensorUtils.h>
-/////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "/home/luisamaro/Desktop/cpp-subprocess-master/include/subprocess.hpp"
+
 
 #include <limits.h>
 
@@ -41,8 +40,7 @@ const int64_t kNumberOfEpochs = 10;
 // After how many batches to log a new update with the loss value.
 const int64_t kLogInterval = 10;
 
-//HW_Fault_Injection_Path
-//std::string path = "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel";
+
 
 
 struct NetImpl : torch::nn::Module {
@@ -130,18 +128,15 @@ void train(
     auto output = model->forward(data).contiguous();
     auto loss = torch::nll_loss(output, targets);
 
-    //std::cout << " IM HERE" << std::endl;
-
     loss.backward();
-    //std::cout << " IM HERE 2" << std::endl;
+
     optimizer.step();
-   //7777777 std::cout << " IM HERE 3" << std::endl;
+
 
      
 
     if (batch_idx++ % kLogInterval == 0) {
 
-      // std::cout << " IM HERE 4" << std::endl;
      std::printf(
           "\rTrain Epoch: %ld [%5ld/%5ld] Loss: %.4f",
           epoch,
@@ -183,41 +178,12 @@ void test(
     auto pred = output.argmax(1);
     correct += pred.eq(targets).sum().template item<int64_t>();
    
-  //  cout << count << " COUNT";
-  //  cout << randomNumber << " randomNumber";
-  /* 
-    if(count == randomNumber){
-	    std::stringstream stream;    
-	  	stream << "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel"
-	        << " " // don't forget a space between the path and the arguments
-	       	<< std::to_string(::getpid()) // pid
-	       	<< " " // don't forget a space between the path and the arguments
-	       	<< argv[0]
-	       	<< " " // don't forget a space between the path and the arguments
-	       	<< argv[1]
-	       	<< " " // don't forget a space between the path and the arguments
-	       	<< "0";
 
-	  	system(stream.str().c_str());
-	}
-	count++;*/
   }
 
 
   test_loss /= dataset_size;
 
-    /*   std::stringstream stream;    
-	  	stream << "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel"
-	        << " " // don't forget a space between the path and the arguments
-	       	<< std::to_string(::getpid()) // pid
-	       	<< " " // don't forget a space between the path and the arguments
-	       	<< argv[0]
-	       	<< " " // don't forget a space between the path and the arguments
-	       	<< argv[1]
-	       	<< " " // don't forget a space between the path and the arguments
-	       	<< "0";
-
-	  	system(stream.str().c_str()); */
   /*std::printf(
       "\nTest set: Average loss: %.4f | Accuracy: %.3f\n ",
       test_loss,
@@ -252,58 +218,37 @@ void test(
 
 
 double flip_bit(double value, int bit_nr) {
-  //std::cout << " Im in flip_bit" << std::endl;
+
 
     long *ptr_to_value = (long*) &value;   // access the 64bits of the double value
-  //  std::cout << " After 1st flip_bit" << std::endl;
+
     *ptr_to_value ^= (1 << bit_nr);        // apply the XOR mask to flip one bit
-  //  std::cout << " After 2nd flip_bit" << std::endl;
-    
-    
-    //std::cout << " Value After"<< value << std::endl;
-   if(value != value)  {
-     // std::cout << " Nan?"<< value << std::endl;
+
+   if(value != value)  {		//prevents -NaN
       flip_bit(value, bit_nr);
 
     }else {
-      //std::cout << " Not Nan?"<< value << std::endl;
       return value;                          // return the new double value
     }
 }
 
 double err(double value, double p) {
-//std::cout << " IM in err" << std::endl;
 
 double value_after= 0;
 long bit = 0;
-   // if(rand() % ODDS == 0) {               // some random executions
+	
     double r = ((double) rand() / (RAND_MAX));
-
-   //std::cout << " P -> " << p << "R->" << r << std::endl;
-    //BOOST_STATIC_ASSERT(sizeof(value) * CHAR_BIT == 64);
     
     if(r <= p){
-     //std::cout << "IN" << std::endl;
 
-       do{ bit = rand() % 64;}while(bit==63 || bit==31);            // select one random bit to be flipped (without bit number 63)
-      //bit = rand() %64;
 
-     // if(bit == 63 || bit == 31) std::cout << " Bit flipped -> "<< bit << std::endl;
-      //std::cout << " Bit flipped -> "<< bit << std::endl;
+       do{ bit = rand() % 64;}while(bit==63 || bit==31);            // select one random bit to be flipped (without bit number 63 and 31)
 
       value_after = flip_bit(value, bit);
 
-     // if (std::abs(value_after - value ) < 1) return value_after;
-     // else err(value, p);
-
-     
-
-     //if(fabs(value - value_after) > 0.1) std::cout << " Value before: "<< value << "Value After: " << value_after << "bit flipped: "<< bit << std::endl;
-      return value_after;
-             // return the value with a bit flipped
+      return value_after; 						// return the value with a bit flipped
     }
     else {
-     // std::cout << "OUT " << std::endl;
         return value;                      // return the value unchanged
     }
 }
@@ -367,183 +312,17 @@ TORCH_CHECK(p >= 0 && p <= 1, "dropout probability has to be between 0 and 1, bu
  //se p for igual 0 n/ é alterado qualquer valor
   if (p == 0 || !train || input.numel() == 0) {
     std::cout << input.type() << std::endl;
-   // std::cout << "probability == 0"<< std::endl;
     return input;
-  }else{
-     // std::cout << "probability not zero -> "<< p << std::endl;
-
-
-
-
-     //std::cout << "DIMENSIONS -> " << input.dim() << std::endl;
-      
+  }else{     
 
       auto input_sizes = input.sizes();
 
-      //std::cout << "DIMENSIONS 2 -> " << (input.sizes()).size() << std::endl;
 
       int size_dim1 = input_sizes[0];
       int size_dim2 = input_sizes[1];
       int size_dim3 = input_sizes[2];
       int size_dim4 = input_sizes[3];
 
-
-
-    
-     //std::cout << "DIMENSION 1 -> " << size_dim1 << "DIMENSION 2 -> " << size_dim2 << "DIMENSION 3 -> " << size_dim3 << "DIMENSION 4 -> " << size_dim4 << std::endl;
-
-      //NOS PODEMOS TER TENSOR COM DIFERENTES DIMENSOES (1,2,3,4), POSTO ISTO TEMOS DE COBRIR ESTAS DIFERENTES OPÇOES
-      
-      
-
-    //double value =input[0][0][0][0].template item<double>();    //converter de at::Tensor -> c10::Scalar -> double
-
-    
-     // std::cout << value << std::endl;
-    
-    /*
-      if(input.dim() == 1){
-        std::cout << " 1 DIMENSION" << std::endl;
-        int64_t size_dim1 = input_sizes[0];
-       
-        for(int i = 0; i < size_dim1; i++){
-            double aux = 0;
-            //std::cout << " Before bit-flip" << input[i] <<std::endl;
-            aux = err(input[i].template item<double>(), p);
-            input[i] = (float) aux;
-           // std::cout << " After bit-flip" << input[i] <<std::endl;
-        }
-
-      }else if(input.dim() == 2){
-        int64_t size_dim1 = input_sizes[0];
-        int64_t size_dim2 = input_sizes[1];
-         std::cout << " 2 DIMENSION" << std::endl;
-          for(int i = 0; i < size_dim1; i++){
-            for(int j = 0; j < size_dim2; j++){
-              double aux = 0;
-               // std::cout << " Before bit-flip" << input[i][j] <<std::endl;
-                aux = err(input[i][j].template item<double>(), p);
-                input[i][j] = (float) aux;
-               // std::cout << " After bit-flip" << input[i][j] <<std::endl;
-            }
-          }
-
-      }else if(input.dim() == 3){
-         int64_t size_dim1 = input_sizes[0];
-        int64_t size_dim2 = input_sizes[1];
-        int64_t size_dim3 = input_sizes[2];
-        std::cout << " 3 DIMENSION" << std::endl;
-          for(int i = 0; i < size_dim1; i++){
-            for(int j = 0; j < size_dim2; j++){
-              for(int k = 0; k < size_dim3; k++){
-                double aux = 0;
-               // std::cout << " Before bit-flip" << input[i][j][k] <<std::endl;
-                aux = err(input[i][j][k].template item<double>(), p);
-                input[i][j][k] = (float) aux;
-               // std::cout << " After bit-flip" << input[i][j][k] <<std::endl;
-              }
-            }
-          }
-
-      }else if(input.dim() == 4){
-        int64_t size_dim1 = input_sizes[0];
-        int64_t size_dim2 = input_sizes[1];
-        int64_t size_dim3 = input_sizes[2];
-        int64_t size_dim4 = input_sizes[3];
-        std::cout << " 4 DIMENSION" << std::endl;
-
-          for(int i = 0; i < size_dim1; i++){
-            for(int j = 0; j < size_dim2; j++){
-              for(int k = 0; k < size_dim3; k++){
-                for(int l = 0;l < size_dim4; l++){
-                double aux = 0;
-                  
-               //   std::cout << " Before bit-flip" << input[i][j][k][l] <<std::endl;
-                  aux = err(input[i][j][k][l].template item<double>(),p);
-                  input[i][j][k][l] = (float) aux;
-                 // std::cout << " After bit-flip" << input[i][j][k][l] <<std::endl;
-                }
-              }
-            }
-          }
-      }*/
-
-      /*
-      if(input.dim() == 2){
-        int64_t size_dim1 = input_sizes[0];
-        int64_t size_dim2 = input_sizes[1];
-
-         //std::cout << " 2 DIMENSION" << std::endl;
-
-        for(int i = 0; i < size_dim1; i++){
-           
-              double aux = 0;
-              //std::cout << " Before bit-flip" << input[i][0][0][0] <<std::endl;
-               aux = err(input[i][0].template item<double>(), p);
-               input[i][0] = aux;
-               // std::cout << " After bit-flip" << input[i][j] <<std::endl;
-            
-          }
-          for(int j= 0; j < size_dim2; j++){
-            //for(int j = 0; j < size_dim2; j++){
-              double aux = 0;
-             // if(input[size_dim1 -1 ][i].template item<float>() != input[size_dim1 -1 ][i].template item<float>()) std::cout << "IM nan" << input[0][i] <<std::endl;
-             // else std::cout << "Not nan" << input[0][i] <<std::endl;
-              //std::cout << " Before bit-flip" << input[0][i] <<std::endl;
-               aux = err(input[0][j].template item<double>(), p);
-               input[0][j] = aux;
-               // std::cout << " After bit-flip" << input[i][j] <<std::endl;
-            // }
-            
-          }
-
-
-
-
-      }else if(input.dim() == 4){
-        int64_t size_dim1 = input_sizes[0];
-        int64_t size_dim2 = input_sizes[1];
-        int64_t size_dim3 = input_sizes[2];
-        int64_t size_dim4 = input_sizes[3];
-        // std::cout << " 2 DIMENSION" << std::endl;
-
-        for(int i = 0; i < size_dim1; i++){
-
-          for(int j = 0; j < size_dim2; j++){
-    
-              double aux = 0;
-              //std::cout << " Before bit-flip" << input[i][0][0][0] <<std::endl;
-               aux = err(input[i][j][0][0].template item<double>(), p);
-               input[i][j][0][0] = aux;
-               // std::cout << " After bit-flip" << input[i][j] <<std::endl;
-          }
-
-            
-      }
-
-         
-
-
-
-        for(int k = 0; k < size_dim3; k++){
-           for(int h = 0; h < size_dim4; h++){
-           
-              double aux = 0;
-              //std::cout << " Before bit-flip" << input[i][0][0][0] <<std::endl;
-               aux = err(input[0][0][k][h].template item<double>(), p);
-               input[0][0][k][h] = aux;
-               // std::cout << " After bit-flip" << input[i][j] <<std::endl;
-            
-          }
-            
-          }
-
-
-
-
-      }
-
-    */
 
       if(input.dim() == 2){
 
@@ -582,8 +361,6 @@ TORCH_CHECK(p >= 0 && p <= 1, "dropout probability has to be between 0 and 1, bu
               for(int h = 0; h < (size_dim4 / 3); h++){
 
                 long v4 = createRand(size_dim4);
-
-               // std::cout << " V1->" << v1 << " V2->" << v2 <<  "V3->" << "V4->" << v4 << std::endl;
 
                 double aux = 0; 
                 aux = err(input[v1][v2][v3][v4].template item<double>(),p);
@@ -759,43 +536,6 @@ Tensor& feature_alpha_dropout_(Tensor& input, double p, bool train) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 auto main(int argc, char* argv[]) -> int {
   torch::manual_seed(1);
 
@@ -842,49 +582,12 @@ auto main(int argc, char* argv[]) -> int {
 
   //torch::save(model, "model10EpochsDropout.pt");  STIMULATED DROPOUT 50% -> 0.878400
 
-  torch::save(model, "modelStimDropout80.pt");  //STIMULATED DROPOUT 80% -> 0.877400
+  //torch::save(model, "modelStimDropout80.pt");  //STIMULATED DROPOUT 80% -> 0.877400
 
   torch::save(model, "modelStimDropout20.pt");  //STIMULATED DROPOUT 20% ->0.880200
 	
 
- /* std::string path = "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel";
-  std::string pid = std::to_string(::getpid());
-  std::string registo = argv[0] ;
-  std::string bit = argv[1];
-  std::string time = argv[2];
-  std::string cmdString;
-  cmdString = path+ " " + pid + " " + bit + " " + time;
-
-  cout << cmdString;
-
-  subprocess::popen cmd(path, {}); 
-  std::cout << cmd.stdout().rdbuf();
-
-  */
-  	  //Do the hardware fault injection
-
    std::cout << "DEBUG: Train ended" << std::endl;
 
-   //Net newModel;
-
-   
-   //torch::load(newModel,"model10Epochs.pt");
-
-  //test(model, device, *test_loader, test_dataset_size, argv);
-
-  //cout << current_time << " seconds has passed since the begining of testing";
-  //serialize::OutputArchive output_archive;
-  //model->save(output_archive);
-  //output_archive.save_to("mode.pt");
-  //storch::save(model, 'model.pt');
-
-	//torch::save(model.state_dict(), "model.pt");
-
-	/*Net newModel;
-  	newModel.to(device);
-	torch::load(newMode,"model.pt");
-	 
-
-	test(newModel, device, *test_loader, test_dataset_size);*/
 
 }
