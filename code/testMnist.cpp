@@ -11,8 +11,6 @@
 #include <string>
 using namespace std;
 
-#include "/home/luisamaro/Desktop/cpp-subprocess-master/include/subprocess.hpp"
-
 //Generate random
 #include <stdlib.h>
 
@@ -33,34 +31,6 @@ const int64_t kNumberOfEpochs = 10;
 const int64_t kLogInterval = 10;
 
 
-int savePid = 0;
-//HW_Fault_Injection_Path
-//std::string path = "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel";
-
-void HW_Fault_Injection(char* argv[]){
-
-
- //std::cout << "HW_Fault_Injection" << savePid << std::endl;
- //std::cout << "OTHER" << ::getpid() << std::endl;
-      srand (time(NULL));
-      int insertTime = rand() % 500 + 100;   //in the range of 100 to 600
-
-     // std::cout << insertTime << std::endl;
-
-      std::stringstream stream;    
-      stream << "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel" ///pinject_fp
-          << " " // don't forget a space between the path and the arguments
-          << std::to_string(savePid) // pid
-          << " " // don't forget a space between the path and the arguments
-          << argv[0]
-          << " " // don't forget a space between the path and the arguments
-          << argv[1]
-          << " " // don't forget a space between the path and the arguments
-          << 10;    //std::to_string(insertTime)
-
-    system(stream.str().c_str());
-
-}
 
 struct NetImpl : torch::nn::Module {
   NetImpl()
@@ -116,20 +86,12 @@ void test(Net model, torch::Device device, DataLoader& data_loader, size_t datas
 
 
 
-     
-
-
     
-    //std::cout << "NORMAL" << ::getpid() << std::endl;
-
     for (const auto& batch : data_loader) {
     	
-    	//2091490088
-      count++;
+
 
      
-
-        //if(count == randomNumber)  std::thread t1( HW_Fault_Injection, argv);
       
         auto data = batch.data.to(device), targets = batch.target.to(device);
         auto output = model->forward(data);
@@ -147,8 +109,7 @@ void test(Net model, torch::Device device, DataLoader& data_loader, size_t datas
 
 
     test_loss /= dataset_size;
-    // value = round (value * 1000.0) / 1000.0
-   // double accuracy = round((static_cast<double>(correct) / dataset_size) * 1000000.0) / 10000.0;
+
 
     /*std::printf(
         "\nTest set: Average loss: %.4f | Accuracy: %.3f\n ",
@@ -166,10 +127,6 @@ void test(Net model, torch::Device device, DataLoader& data_loader, size_t datas
       myfile.close();
 
 
-
-   /*  if(accuracy == 88.31) std::cout << "Accuracy: " << accuracy << std::endl;
-     else std::cout << "Accuracy: " << accuracy << "___________SDC___________" << std::endl;
-*/
 }
 
 
@@ -205,22 +162,9 @@ auto main(int argc, char* argv[]) -> int {
   std::cout << "DEBUG: accessfile() called by process " << ::getpid() << " (parent: " << ::getppid() << ")" << std::endl;
   
   torch::load(model,"model10Epochs.pt");  //Trained with 10 epoch
-  //torch::load(model,"model.pt");           //Trained with 1 epoch
-  //savePid = ::getpid();
 
-
-  
-  //pid_t pid = fork();
-
-
-
-  //if(pid == 0) HW_Fault_Injection(argv);
-  //else if(pid > 0){
-  int i = 0;
   while(true) test(model, device, *test_loader, test_dataset_size, argv);
-  //}else {
-     // printf("Fork Failed");
-  //}
+
   
 
 
