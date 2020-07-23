@@ -11,13 +11,11 @@
 #include <string>
 using namespace std;
 
-///////////////////////////NEW STIMULATED DROPOUT////////////////////////////////////////////
+
 #include <ATen/ATen.h>
 #include <ATen/Dispatch.h>
 #include <ATen/NamedTensorUtils.h>
-/////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "/home/luisamaro/Desktop/cpp-subprocess-master/include/subprocess.hpp"
 
 //Generate random
 #include <stdlib.h>
@@ -45,29 +43,6 @@ const int64_t kNumberOfEpochs = 1;
 
 // After how many batches to log a new update with the loss value.
 const int64_t kLogInterval = 10;
-
-
-int savePid = 0;
-//HW_Fault_Injection_Path
-//std::string path = "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel";
-
-void HW_Fault_Injection(char* argv[]){
-int insertTime = rand() % 500 + 100;   //between 100 and 700
-  //std::cout << "HW_Fault_Injection" << savePid << std::endl;
-
-      std::stringstream stream;    
-      stream << "/home/luisamaro/Desktop/HW_Injectors_ucXception/newest_injector/./pinject_intel" //_intel_fp
-          << " " // don't forget a space between the path and the arguments
-          << std::to_string(savePid) // pid
-          << " " // don't forget a space between the path and the arguments
-          << argv[0]
-          << " " // don't forget a space between the path and the arguments
-          << argv[1]
-          << " " // don't forget a space between the path and the arguments
-          << std::to_string(insertTime);
-
-      system(stream.str().c_str());
-}
 
 
 struct NetImpl : torch::nn::Module {
@@ -142,19 +117,11 @@ void test(Net model, torch::Device device, DataLoader& data_loader, size_t datas
 
   int count = 1;
 
-    
-   // std::cout << "NORMAL" << ::getpid() << std::endl;
+
 
     for (const auto& batch : data_loader) {
     	
 
-
-     
-
-         
-        
-
-          //if(count == randomNumber)  std::thread t1( HW_Fault_Injection, argv);
         
           auto data = batch.data.to(device), targets = batch.target.to(device);
           auto output = model->forward(data);
@@ -186,27 +153,13 @@ void test(Net model, torch::Device device, DataLoader& data_loader, size_t datas
      // }
 
       std::ofstream myfile;
-      myfile.open("/home/luisamaro/Desktop/examples-master/cpp/mnist/build/ResultsStimDrop50/reg1.txt", std::ios_base::app); // append instead of overwrite
+      myfile.open("pathToFile/Results.txt", std::ios_base::app); // append instead of overwrite
       myfile << setprecision(10) << static_cast<double>(correct) / dataset_size << "\n";
       myfile.close();
 
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
