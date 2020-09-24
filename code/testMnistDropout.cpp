@@ -11,13 +11,11 @@
 #include <string>
 using namespace std;
 
-///////////////////////////NEW STIMULATED DROPOUT////////////////////////////////////////////
+
 #include <ATen/ATen.h>
 #include <ATen/Dispatch.h>
 #include <ATen/NamedTensorUtils.h>
-/////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "/home/luisamaro/Desktop/cpp-subprocess-master/include/subprocess.hpp"
 
 //Generate random
 #include <stdlib.h>
@@ -32,7 +30,7 @@ using namespace std;
 #include <stdlib.h>
 #include <ucontext.h>
 // Where to find the MNIST dataset.
-const char* kDataRoot = "./dataMnist";
+const char* kDataRoot = "./data";
 
 // The batch size for training.
 const int64_t kTrainBatchSize = 64;
@@ -45,11 +43,6 @@ const int64_t kNumberOfEpochs = 1;
 
 // After how many batches to log a new update with the loss value.
 const int64_t kLogInterval = 10;
-
-
-
-
-
 
 
 struct NetImpl : torch::nn::Module {
@@ -71,11 +64,13 @@ struct NetImpl : torch::nn::Module {
 
   torch::Tensor forward(torch::Tensor x) {
 
+    //x = torch::relu(conv1_drop->forward(torch::max_pool2d((conv1->forward(x)), 2)));
+    //x = torch::relu(conv2_drop->forward(torch::max_pool2d((conv2->forward(x)), 2)));
 
 
     x = torch::relu(torch::max_pool2d(conv1_drop->forward(conv1->forward(x)), 2));
     x = torch::relu(
-
+      //torch::max_pool2d((conv2->forward(x)), 2));
         torch::max_pool2d(conv2_drop->forward(conv2->forward(x)), 2));
     x = x.view({-1, 320});  
    // x = torch::dropout(x, /*p=*/0.8, /*training=*/is_training());
@@ -120,6 +115,7 @@ void test(Net model, torch::Device device, DataLoader& data_loader, size_t datas
 
   int32_t correct = 0;
 
+  int count = 1;
 
 
 
@@ -157,27 +153,13 @@ void test(Net model, torch::Device device, DataLoader& data_loader, size_t datas
      // }
 
       std::ofstream myfile;
-      myfile.open("pathToFile/file.txt", std::ios_base::app); // append instead of overwrite
+      myfile.open("pathToFile/Results.txt", std::ios_base::app); // append instead of overwrite
       myfile << setprecision(10) << static_cast<double>(correct) / dataset_size << "\n";
       myfile.close();
 
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -225,7 +207,6 @@ Tensor multiply(const Tensor& input, const Tensor& noise) {
 
 template<bool feature_dropout, bool alpha_dropout, bool inplace, typename T>
 Ctype<inplace> _dropout_impl(T& input, double p, bool train) {
-
 
 
 
@@ -315,19 +296,19 @@ Tensor dropout(const Tensor& input, double p, bool train) {
 }
 
 Tensor& dropout_(Tensor& input, double p, bool train) {
-  return _dropout<true>(input, 0.2, train);
+  return _dropout<true>(input, 0.5, train);
 }
 
 Tensor feature_dropout(const Tensor& input, double p, bool train) {
 
   //std::cout << "Feature_Dropout | p-> " << p <<  std::endl;
 
-  return _feature_dropout<false>(input, 0.2, train);
+  return _feature_dropout<false>(input, 0.5, train);
 }
 
 Tensor& feature_dropout_(Tensor& input, double p, bool train) {
    std::cout << "&Feature_Dropout | p-> " << p <<  std::endl;
-  return _feature_dropout<true>(input, 0.2, train);
+  return _feature_dropout<true>(input, 0.5, train);
 }
 
 Tensor alpha_dropout(const Tensor& input, double p, bool train) {
@@ -390,12 +371,13 @@ auto main(int argc, char* argv[]) -> int {
   //print PID do projeto
   std::cout << "DEBUG: accessfile() called by process " << ::getpid();
   
-  //torch::load(model,"model10EpochsDropout.pt");  
+  //torch::load(model,"model10EpochsDropout.pt");  //STIMULATED DROPOUT 50% -> 0.878400
 
-  int i = 0;
+  //torch::load(model, "modelStimDropout80.pt");  //STIMULATED DROPOUT 80% -> 0.877400
+
+  torch::load(model, "modelStimDropout20.pt");  //STIMULATED DROPOUT 20% -> 0.880200
+
   while(true) test(model, device, *test_loader, test_dataset_size, argv);
-
-
 
 
 }

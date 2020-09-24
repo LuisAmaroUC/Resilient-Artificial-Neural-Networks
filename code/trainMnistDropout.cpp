@@ -12,13 +12,12 @@
 using namespace std;
 
 
-///////////////////////////NEW STIMULATED DROPOUT////////////////////////////////////////////
+
 #include <ATen/ATen.h>
 #include <ATen/Dispatch.h>
 #include <ATen/NamedTensorUtils.h>
-/////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "/home/luisamaro/Desktop/cpp-subprocess-master/include/subprocess.hpp"
+
 
 #include <limits.h>
 
@@ -27,7 +26,7 @@ using namespace std;
 
 #include <unistd.h>		// ::getpid()
 // Where to find the MNIST dataset.
-const char* kDataRoot = "./dataMnist";
+const char* kDataRoot = "./data";
  
 // The batch size for training.
 const int64_t kTrainBatchSize = 64;
@@ -129,7 +128,6 @@ void train(
     auto output = model->forward(data).contiguous();
     auto loss = torch::nll_loss(output, targets);
 
-
     loss.backward();
 
     optimizer.step();
@@ -167,7 +165,7 @@ void test(
 
   for (const auto& batch : data_loader) {
   	
-
+  	//2091490088
     auto data = batch.data.to(device), targets = batch.target.to(device);
     auto output = model->forward(data);
     test_loss += torch::nll_loss(
@@ -180,6 +178,7 @@ void test(
     auto pred = output.argmax(1);
     correct += pred.eq(targets).sum().template item<int64_t>();
    
+
   }
 
 
@@ -225,46 +224,31 @@ double flip_bit(double value, int bit_nr) {
 
     *ptr_to_value ^= (1 << bit_nr);        // apply the XOR mask to flip one bit
 
-    
-    
-
-   if(value != value)  {
-
+   if(value != value)  {		//prevents -NaN
       flip_bit(value, bit_nr);
 
     }else {
-  
       return value;                          // return the new double value
     }
 }
 
 double err(double value, double p) {
 
-
 double value_after= 0;
 long bit = 0;
-   
+	
     double r = ((double) rand() / (RAND_MAX));
-
-  
     
     if(r <= p){
 
 
-       do{ bit = rand() % 64;}while(bit==63 || bit==31);            // select one random bit to be flipped (without bit number 63)
-
+       do{ bit = rand() % 64;}while(bit==63 || bit==31);            // select one random bit to be flipped (without bit number 63 and 31)
 
       value_after = flip_bit(value, bit);
 
-
-     
-
-
-      return value_after;
-             // return the value with a bit flipped
+      return value_after; 						// return the value with a bit flipped
     }
     else {
-  
         return value;                      // return the value unchanged
     }
 }
@@ -322,12 +306,119 @@ Tensor multiply(const Tensor& input, const Tensor& noise) {
 template<bool feature_dropout, bool alpha_dropout, bool inplace, typename T>
 Ctype<inplace> _dropout_impl(T& input, double p, bool train) {
 
+
+
+TORCH_CHECK(p >= 0 && p <= 1, "dropout probability has to be between 0 and 1, but got ", p);
+ //se p for igual 0 n/ é alterado qualquer valor
+  if (p == 0 || !train || input.numel() == 0) {
+    std::cout << input.type() << std::endl;
+    return input;
+  }else{     
+
+      auto input_sizes = input.sizes();
+
+
+      int size_dim1 = input_sizes[0];
+      int size_dim2 = input_sizes[1];
+      int size_dim3 = input_sizes[2];
+      int size_dim4 = input_sizes[3];
+
+
+      if(input.dim() == 2){
+
+        for(int i = 0; i < (size_dim1 / 2); i++){
+
+          int v1 = createRand(size_dim1);
+
+          for(int j = 0; j < (size_dim2/ 2); j++ ){
+
+            int v2 = createRand(size_dim2);
+
+            double aux = 0;
+            aux = err(input[v1][v2].template item<double>(),p);
+            input[v1][v2] = aux;
+
+          }
+
+        }
+
+      }
+
+      else if(input.dim() == 4){
+
+        for(int i = 0; i < (size_dim1 / 3); i++){
+
+          int v1 = createRand(size_dim1);
+
+          for(int j = 0; j < (size_dim2 / 3); j++){
+
+            int v2 = createRand(size_dim2);
+          
+            for(int k = 0; k < (size_dim3 / 3); k++){
+
+              long v3 = createRand(size_dim3);
+          
+              for(int h = 0; h < (size_dim4 / 3); h++){
+
+                long v4 = createRand(size_dim4);
+
+                double aux = 0; 
+                aux = err(input[v1][v2][v3][v4].template item<double>(),p);
+                input[v1][v2][v3][v4] = aux;
+
+              }
+
+            }
+
+          }
+
+        }
+      }
+      else{
+        std::cout << "DIMENSION 1 -> " << size_dim1 << "DIMENSION 2 -> " << size_dim2 << "DIMENSION 3 -> " << size_dim3 << "DIMENSION 4 -> " << size_dim4 << std::endl;
+          return input;
+      }
+      
+  
+      return input;
+    }
+}
+
+
+
+
+
+
+
+
+
+  //Nunca vão existir bit-flips
+  //if (p == 0 || !train || input.numel() == 0) {
+  //  return input;
+  
+  //}
+
+
+  //Vão sempre existir bit-flips
+  //if (p == 1) {
+    //return multiply<inplace>(input, at::zeros({}, input.options()));
+
+  
+      
+  //    std::cout << input.data.cpu().numpy()   << std::endl;
+    
+  //}
+
+
+//
+
+/*
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////// OLD DROPOUT ///////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+  std::cout << "probability -> "<< p << std::endl;
   
   //TORCH_CHECK(p >= 0 && p <= 1, "dropout probability has to be between 0 and 1, but got ", p);
   if (p == 0 || !train || input.numel() == 0) {
@@ -345,8 +436,8 @@ Ctype<inplace> _dropout_impl(T& input, double p, bool train) {
  
 
   // IF IT IS FEATURE_DROPOUT IT ENTERS IN THE MAKE_FEATURE_NOISE ELSE IT ENTERS IN THE EMPTY_LIKE
-   //make_feature_noise -> ??????????????
-   //at::empty_like(input) -> Returns an uninitialized tensor with the same size as input. torch.empty_like(input) is equivalent to torch.empty(input.size(), dtype=input.dtype, layout=input.layout, device=input.device).
+  // make_feature_noise -> ??????????????
+  // at::empty_like(input) -> Returns an uninitialized tensor with the same size as input. torch.empty_like(input) is equivalent to torch.empty(input.size(), dtype=input.dtype, layout=input.layout, device=input.device).
 
 
   //auto noise = feature_dropout ? make_feature_noise(input) : at::empty_like(input, LEGACY_CONTIGUOUS_MEMORY_FORMAT);
@@ -381,7 +472,7 @@ Ctype<inplace> _dropout_impl(T& input, double p, bool train) {
   
 
 }
-
+*/
 #define ALIAS_SPECIALIZATION(ALIAS_NAME, IS_FEATURE, IS_ALPHA)                      \
 template <bool inplace, typename... Args>                                           \
 Ctype<inplace> ALIAS_NAME(Args&&... args) {                                         \
@@ -408,18 +499,18 @@ Tensor dropout(const Tensor& input, double p, bool train) {
 }
 
 Tensor& dropout_(Tensor& input, double p, bool train) {
-  return _dropout<true>(input, 0.8, train);
+  return _dropout<true>(input, 0.2, train);
 }
 
 Tensor feature_dropout(const Tensor& input, double p, bool train) {
 
   //std::cout << "Feature_Dropout | p-> " << p <<  std::endl;
-  return _feature_dropout<false>(input, 0.8, train);
+  return _feature_dropout<false>(input, 0.2, train);
 }
 
 Tensor& feature_dropout_(Tensor& input, double p, bool train) {
    std::cout << "&Feature_Dropout | p-> " << p <<  std::endl;
-  return _feature_dropout<true>(input, 0.8, train);
+  return _feature_dropout<true>(input, 0.2, train);
 }
 
 Tensor alpha_dropout(const Tensor& input, double p, bool train) {
@@ -439,43 +530,6 @@ Tensor& feature_alpha_dropout_(Tensor& input, double p, bool train) {
 }
 
 }} // namespace at::native
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -526,11 +580,14 @@ auto main(int argc, char* argv[]) -> int {
     train(epoch, model, device, *train_loader, optimizer, train_dataset_size);
   }
 
-  torch::save(model, "model10EpochsDropout.pt");  
+  //torch::save(model, "model10EpochsDropout.pt");  STIMULATED DROPOUT 50% -> 0.878400
 
+  //torch::save(model, "modelStimDropout80.pt");  //STIMULATED DROPOUT 80% -> 0.877400
+
+  torch::save(model, "modelStimDropout20.pt");  //STIMULATED DROPOUT 20% ->0.880200
+	
 
    std::cout << "DEBUG: Train ended" << std::endl;
-
 
 
 }
