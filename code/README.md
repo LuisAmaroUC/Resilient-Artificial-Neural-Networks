@@ -6,15 +6,7 @@
 
 ## Setup
 
-### Training and Python Tests
-
-Install python3, then use pip to install some necessary modules (if needed, use the `--user` to avoid a system installation). Namely:
-
-* Install numpy
-
-```sh
-pip install numpy
-```
+### Training and Tests
 
 * Install pytorch(not necessarily the GPU version)
 
@@ -22,22 +14,20 @@ pip install numpy
 pip install pytorch
 ```
 
-* Install keras
-
-
-
 
 ## How to Train the Network
-
-* Run:
+* Go to build directory:
 
 ```sh
-python3 train_simple_cnn.py
+make
 ```
-
-The script has command line arguments that can be used to control the level of dropout. They can be listed by calling:
+* Train:
 
 ```sh
-python3 train_simple_cnn.py --help
+./trainMnistDropout
+```
+* Test:
+```sh
+./testMnistDropout
 ```
 
