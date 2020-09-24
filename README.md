@@ -1,4 +1,4 @@
 # Resilient_Artificial_Neural_Networks
 
 
-[My image](https://github.com/LuisAmaroUC/Resilient_Artificial_Neural_Network/code/modelNN.png)
+![alt text](https://github.com/LuisAmaroUC/Resilient_Artificial_Neural_Networks/blob/master/code/modelNN.png?raw=true)
