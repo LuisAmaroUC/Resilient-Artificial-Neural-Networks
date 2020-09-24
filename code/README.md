@@ -24,10 +24,14 @@ make
 * Train:
 
 ```sh
+./trainMnist
 ./trainMnistDropout
+./trainStimulatedDropout
 ```
 * Test:
 ```sh
+./testMnist
 ./testMnistDropout
+./testStimulatedDropout
 ```
 
