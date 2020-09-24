@@ -48,10 +48,6 @@ const int64_t kLogInterval = 10;
 
 
 
-
-
-
-
 struct NetImpl : torch::nn::Module {
   NetImpl()
       : conv1(torch::nn::Conv2dOptions(1, 10, /*kernel_size=*/5)),          //in_channels,out_channels,kernel_size,stride=1,padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros'
@@ -71,11 +67,13 @@ struct NetImpl : torch::nn::Module {
 
   torch::Tensor forward(torch::Tensor x) {
 
+    //x = torch::relu(conv1_drop->forward(torch::max_pool2d((conv1->forward(x)), 2)));
+    //x = torch::relu(conv2_drop->forward(torch::max_pool2d((conv2->forward(x)), 2)));
 
 
     x = torch::relu(torch::max_pool2d(conv1_drop->forward(conv1->forward(x)), 2));
     x = torch::relu(
-
+      //torch::max_pool2d((conv2->forward(x)), 2));
         torch::max_pool2d(conv2_drop->forward(conv2->forward(x)), 2));
     x = x.view({-1, 320});  
    // x = torch::dropout(x, /*p=*/0.8, /*training=*/is_training());
@@ -122,6 +120,7 @@ void test(Net model, torch::Device device, DataLoader& data_loader, size_t datas
 
 
 
+ 
 
     for (const auto& batch : data_loader) {
     	
@@ -179,6 +178,71 @@ void test(Net model, torch::Device device, DataLoader& data_loader, size_t datas
 
 
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////// NEW DROPOUT ///////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//#define SIZE 5
+//#define ODDS 3    //the odds of injecting an error
+
+
+double flip_bit(double value, int bit_nr) {
+
+
+    long *ptr_to_value = (long*) &value;   // access the 64bits of the double value
+
+    *ptr_to_value ^= (1 << bit_nr);        // apply the XOR mask to flip one bit
+
+   if(value != value)  {
+
+      flip_bit(value, bit_nr);
+
+    }else {
+
+      return value;                          // return the new double value
+    }
+}
+
+double err(double value, double p) {
+//std::cout << " IM in err" << std::endl;
+
+double value_after= 0;
+long bit = 0;
+
+    double r = ((double) rand() / (RAND_MAX));
+
+
+    
+    if(r <= p){
+
+
+       do{ bit = rand() % 64;}while(bit==63 || bit==31);            // select one random bit to be flipped (without bit number 63)
+
+
+      value_after = flip_bit(value, bit);
+
+
+     
+
+    
+      return value_after;
+             // return the value with a bit flipped
+    }
+    else {
+
+        return value;                      // return the value unchanged
+    }
+}
+
+int createRand(int dimension){
+  int value = rand() % dimension;
+
+  return value;
+
+}
 
 
 
@@ -229,65 +293,72 @@ Ctype<inplace> _dropout_impl(T& input, double p, bool train) {
 
 
 
-
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////// OLD DROPOUT ///////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   //std::cout << "probability -> "<< p << std::endl;
-  TORCH_CHECK(p >= 0 && p <= 1, "dropout probability has to be between 0 and 1, but got ", p);
+TORCH_CHECK(p >= 0 && p <= 1, "dropout probability has to be between 0 and 1, but got ", p);
+ //se p for igual 0 n/ é alterado qualquer valor
   if (p == 0 || !train || input.numel() == 0) {
-     //std::cout << "probability == 0"<< std::endl;
-    return input;
-  }
-
-  if (p == 1) {
-    return multiply<inplace>(input, at::zeros({}, input.options()));
-  }
-
-  at::Tensor b; // used for alpha_dropout only
-
-
  
+    return input;
+  }else{
 
-  // IF IT IS FEATURE_DROPOUT IT ENTERS IN THE MAKE_FEATURE_NOISE ELSE IT ENTERS IN THE EMPTY_LIKE
-  // make_feature_noise -> ??????????????
-  // at::empty_like(input) -> Returns an uninitialized tensor with the same size as input. torch.empty_like(input) is equivalent to torch.empty(input.size(), dtype=input.dtype, layout=input.layout, device=input.device).
+      
 
+      auto input_sizes = input.sizes();
 
-  //auto noise = feature_dropout ? make_feature_noise(input) : at::empty_like(input, LEGACY_CONTIGUOUS_MEMORY_FORMAT);
-  auto noise = feature_dropout ? make_feature_noise(input) : at::empty_like(input);     //CHANGED MEMORY FORMAT
+      int64_t size_dim1 = input_sizes[0];
+      int64_t size_dim2 = input_sizes[1];
+      int64_t size_dim3 = input_sizes[2];
+      int64_t size_dim4 = input_sizes[3];
 
+     
+      if(input.dim() == 1){
+       
+        for(int i = 0; i < size_dim1; i++){
+            std::cout << " 1 DIMENSION" << std::endl;
+            input[i] = err(input[i].template item<double>(), p);
+        }
+
+      }else if(input.dim() == 2){
+          for(int i = 0; i < size_dim1; i++){
+            for(int j = 0; j < size_dim2; j++){
+              std::cout << " 2 DIMENSION" << std::endl;
+                input[i][j] = err(input[i][j].template item<double>(), p);
+            }
+          }
+
+      }else if(input.dim() == 3){
+          for(int i = 0; i < size_dim1; i++){
+            for(int j = 0; j < size_dim2; j++){
+              for(int k = 0; k < size_dim3; k++){
+                std::cout << " 3 DIMENSION" << std::endl;
+                input[i][j][k] = err(input[i][j][k].template item<double>(), p);
+              }
+            }
+          }
+
+      }else if(input.dim() == 4){
+
+          for(int i = 0; i < size_dim1; i++){
+            for(int j = 0; j < size_dim2; j++){
+              for(int k = 0; k < size_dim3; k++){
+                for(int l = 0;l < size_dim4; l++){
+                  std::cout << " 4 DIMENSION" << std::endl;
+                  input[i][j][k][l] = err(input[i][j][k][l].template item<double>(),p);
+                }
+              }
+            }
+          }
+      }else{
+        std::cout << " + 4 DIMENSION" << std::endl;
+          return input;
+      }
 
   
-  //Creates a Bernoulli distribution parameterized by probs or logits (but not both).
-  //Samples are binary (0 or 1). They take the value 1 with probability p and 0 with probability 1 - p.
-  noise.bernoulli_(1 - p);
-
-  //ALPHA DROPOUT NOT USED 
-  if (alpha_dropout) {
-    constexpr double alpha = 1.7580993408473766;
-    double a = 1. / std::sqrt((alpha * alpha * p + 1) * (1 - p));
-    b = noise.add(-1).mul_(alpha * a).add_(alpha * a * p);
-    noise.mul_(a);
-
-  // FEATURE_DROPOUT  
-  } else {
-    noise.div_(1 - p);
-  }
-
-  if (!alpha_dropout) {
-    return multiply<inplace>(input, noise);
-  }
-  //FEATURE DROPOUT 
-  else {
-    return multiply<inplace>(input, noise).add_(b);
-  }
-
-  
-
+      return input;
+    }
 }
+
+
+
 
 #define ALIAS_SPECIALIZATION(ALIAS_NAME, IS_FEATURE, IS_ALPHA)                      \
 template <bool inplace, typename... Args>                                           \
@@ -390,12 +461,10 @@ auto main(int argc, char* argv[]) -> int {
   //print PID do projeto
   std::cout << "DEBUG: accessfile() called by process " << ::getpid();
   
-  //torch::load(model,"model10EpochsDropout.pt");  
+  torch::load(model,"model10EpochsDropout.pt"); 
 
   int i = 0;
   while(true) test(model, device, *test_loader, test_dataset_size, argv);
-
-
 
 
 }

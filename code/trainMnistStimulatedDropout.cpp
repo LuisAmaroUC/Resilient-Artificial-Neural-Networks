@@ -43,7 +43,6 @@ const int64_t kLogInterval = 10;
 
 
 
-
 struct NetImpl : torch::nn::Module {
   NetImpl()
       : conv1(torch::nn::Conv2dOptions(1, 10, /*kernel_size=*/5)),          //in_channels,out_channels,kernel_size,stride=1,padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros'
@@ -130,6 +129,7 @@ void train(
     auto loss = torch::nll_loss(output, targets);
 
 
+
     loss.backward();
 
     optimizer.step();
@@ -167,7 +167,7 @@ void test(
 
   for (const auto& batch : data_loader) {
   	
-
+  	//2091490088
     auto data = batch.data.to(device), targets = batch.target.to(device);
     auto output = model->forward(data);
     test_loss += torch::nll_loss(
@@ -180,6 +180,7 @@ void test(
     auto pred = output.argmax(1);
     correct += pred.eq(targets).sum().template item<int64_t>();
    
+
   }
 
 
@@ -233,7 +234,7 @@ double flip_bit(double value, int bit_nr) {
       flip_bit(value, bit_nr);
 
     }else {
-  
+
       return value;                          // return the new double value
     }
 }
@@ -243,28 +244,22 @@ double err(double value, double p) {
 
 double value_after= 0;
 long bit = 0;
-   
+           // some random executions
     double r = ((double) rand() / (RAND_MAX));
 
-  
     
     if(r <= p){
-
-
+     //std::cout << "IN" << std::endl;
        do{ bit = rand() % 64;}while(bit==63 || bit==31);            // select one random bit to be flipped (without bit number 63)
 
 
       value_after = flip_bit(value, bit);
 
-
-     
-
-
       return value_after;
-             // return the value with a bit flipped
+            
     }
     else {
-  
+    
         return value;                      // return the value unchanged
     }
 }
@@ -322,65 +317,94 @@ Tensor multiply(const Tensor& input, const Tensor& noise) {
 template<bool feature_dropout, bool alpha_dropout, bool inplace, typename T>
 Ctype<inplace> _dropout_impl(T& input, double p, bool train) {
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////// OLD DROPOUT ///////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  
-  //TORCH_CHECK(p >= 0 && p <= 1, "dropout probability has to be between 0 and 1, but got ", p);
+
+TORCH_CHECK(p >= 0 && p <= 1, "dropout probability has to be between 0 and 1, but got ", p);
+ //se p for igual 0 n/ é alterado qualquer valor
   if (p == 0 || !train || input.numel() == 0) {
-     
+    std::cout << input.type() << std::endl;
+
     return input;
-  }
+  }else{ 
 
-  if (p == 1) {
-    return multiply<inplace>(input, at::zeros({}, input.options()));
-  }
-
-  at::Tensor b; // used for alpha_dropout only
+      auto input_sizes = input.sizes();
 
 
+
+      int size_dim1 = input_sizes[0];
+      int size_dim2 = input_sizes[1];
+      int size_dim3 = input_sizes[2];
+      int size_dim4 = input_sizes[3];
+
+    
  
 
-  // IF IT IS FEATURE_DROPOUT IT ENTERS IN THE MAKE_FEATURE_NOISE ELSE IT ENTERS IN THE EMPTY_LIKE
-   //make_feature_noise -> ??????????????
-   //at::empty_like(input) -> Returns an uninitialized tensor with the same size as input. torch.empty_like(input) is equivalent to torch.empty(input.size(), dtype=input.dtype, layout=input.layout, device=input.device).
+      if(input.dim() == 2){
 
+        for(int i = 0; i < (size_dim1 / 2); i++){
 
-  //auto noise = feature_dropout ? make_feature_noise(input) : at::empty_like(input, LEGACY_CONTIGUOUS_MEMORY_FORMAT);
-  auto noise = feature_dropout ? make_feature_noise(input) : at::empty_like(input);     //CHANGED MEMORY FORMAT
+          int v1 = createRand(size_dim1);
 
+          for(int j = 0; j < (size_dim2/ 2); j++ ){
 
+            int v2 = createRand(size_dim2);
+
+            double aux = 0;
+            aux = err(input[v1][v2].template item<double>(),p);
+            input[v1][v2] = aux;
+
+          }
+
+        }
+
+      }
+
+      else if(input.dim() == 4){
+
+        for(int i = 0; i < (size_dim1 / 3); i++){
+
+          int v1 = createRand(size_dim1);
+
+          for(int j = 0; j < (size_dim2 / 3); j++){
+
+            int v2 = createRand(size_dim2);
+          
+            for(int k = 0; k < (size_dim3 / 3); k++){
+
+              long v3 = createRand(size_dim3);
+          
+              for(int h = 0; h < (size_dim4 / 3); h++){
+
+                long v4 = createRand(size_dim4);
+
+     
+
+                double aux = 0; 
+                aux = err(input[v1][v2][v3][v4].template item<double>(),p);
+                input[v1][v2][v3][v4] = aux;
+
+              }
+
+            }
+
+          }
+
+        }
+      }
+      else{
+        std::cout << "DIMENSION 1 -> " << size_dim1 << "DIMENSION 2 -> " << size_dim2 << "DIMENSION 3 -> " << size_dim3 << "DIMENSION 4 -> " << size_dim4 << std::endl;
+          return input;
+      }
+      
   
-  //Creates a Bernoulli distribution parameterized by probs or logits (but not both).
-  //Samples are binary (0 or 1). They take the value 1 with probability p and 0 with probability 1 - p.
-  noise.bernoulli_(1 - p);
-
-  //ALPHA DROPOUT NOT USED 
-  if (alpha_dropout) {
-    constexpr double alpha = 1.7580993408473766;
-    double a = 1. / std::sqrt((alpha * alpha * p + 1) * (1 - p));
-    b = noise.add(-1).mul_(alpha * a).add_(alpha * a * p);
-    noise.mul_(a);
-
-  // FEATURE_DROPOUT  
-  } else {
-    noise.div_(1 - p);
-  }
-
-  if (!alpha_dropout) {
-    return multiply<inplace>(input, noise);
-  }
-  //FEATURE DROPOUT 
-  else {
-    return multiply<inplace>(input, noise).add_(b);
-  }
-
-  
-
+      return input;
+    }
 }
+
+
+
+
+
 
 #define ALIAS_SPECIALIZATION(ALIAS_NAME, IS_FEATURE, IS_ALPHA)                      \
 template <bool inplace, typename... Args>                                           \
@@ -408,18 +432,18 @@ Tensor dropout(const Tensor& input, double p, bool train) {
 }
 
 Tensor& dropout_(Tensor& input, double p, bool train) {
-  return _dropout<true>(input, 0.8, train);
+  return _dropout<true>(input, 0.2, train);
 }
 
 Tensor feature_dropout(const Tensor& input, double p, bool train) {
 
   //std::cout << "Feature_Dropout | p-> " << p <<  std::endl;
-  return _feature_dropout<false>(input, 0.8, train);
+  return _feature_dropout<false>(input, 0.2, train);
 }
 
 Tensor& feature_dropout_(Tensor& input, double p, bool train) {
    std::cout << "&Feature_Dropout | p-> " << p <<  std::endl;
-  return _feature_dropout<true>(input, 0.8, train);
+  return _feature_dropout<true>(input, 0.2, train);
 }
 
 Tensor alpha_dropout(const Tensor& input, double p, bool train) {
@@ -527,6 +551,8 @@ auto main(int argc, char* argv[]) -> int {
   }
 
   torch::save(model, "model10EpochsDropout.pt");  
+
+
 
 
    std::cout << "DEBUG: Train ended" << std::endl;
