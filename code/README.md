@@ -11,7 +11,7 @@
 * Install pytorch(not necessarily the GPU version)
 
 ```sh
-pip install pytorch
+https://pytorch.org/cppdocs/installing.html
 ```
 
 
